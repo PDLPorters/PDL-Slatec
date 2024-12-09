@@ -2,6 +2,9 @@ use strict;
 use warnings;
 use PDL::Types;
 
+our $VERSION = '2.096';
+pp_setversion($VERSION);
+
 pp_addpm({At=>'Top'},<<'EOD');
 use strict;
 use warnings;
