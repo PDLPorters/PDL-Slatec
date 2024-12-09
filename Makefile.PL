@@ -5,48 +5,16 @@ use Config;
 use version;
 use Text::ParseWords qw(shellwords);
 use PDL::Core::Dev;
+use ExtUtils::F77;
 
-my $msg = "";
-my ($f77);
+my $f77 = 'ExtUtils::F77';
 
-if (exists $ENV{F77CONF} && -f $ENV{F77CONF}) {
-  print "Loading F77 configuration from $ENV{F77CONF}...\n";
-  eval { require $ENV{F77CONF} };
-  if ($@ ne "") {
-    $msg = "F77CONF file not loaded: $@\nOught not build PDL::Slatec\n";
-    goto skip;
-  }
-  $f77 = 'F77Conf';
-} else {
-  eval { require ExtUtils::F77; ExtUtils::F77->import; };  # Might want "ExtUtils::F77->import(qw(generic f2c))"
-  if ($@ ne "") {
-    $msg = "ExtUtils::F77 module not found. Ought not build PDL::Slatec\n" ;
-    goto skip;
-  } else {
-    $f77 = 'ExtUtils::F77';
-    if ($ExtUtils::F77::VERSION < 1.03 ) {
-      $msg = "Need a version of ExtUtils::F77 >= 1.03. Ought not build PDL::Slatec\n" ;
-      goto skip;
-    }
-  }  # end if ($@ ne "")
-} # if (exists $ENV{F77CONF}...
-
-my $compiler_available = $f77->testcompiler;
-
-if (!$compiler_available) {
-   $msg = "No f77 compiler found. Ought to skip PDL::Slatec on this system\n";
-}
-
-skip:
-
-if ($msg ne "") {
-    write_dummy_make( $msg );
-    return;
-}
+die "No f77 compiler found. Can't build PDL::Slatec on this system\n"
+  if !$f77->testcompiler;
 
 my @pack = (["slatec.pd", qw(Slatec PDL::Slatec), '', 1]);
 my @slatecfiles = map {s/\.f$//; $_} glob("slatec/*.f");
-my %hash = pdlpp_stdargs_int(@pack);
+my %hash = pdlpp_stdargs(@pack);
 
 my @slatecobj = map "$_\$(OBJ_EXT)", @slatecfiles;
 $hash{OBJECT} .= join ' ', '', 'barf$(OBJ_EXT)', @slatecobj;
@@ -77,17 +45,16 @@ $hash{clean}{FILES} .= join ' ', '', @slatecobj;
 
 $hash{DEFINE} .= qq{ "-DPDL_FORTRAN(x)=x}.($f77->trail_ ? '\#\#_' : '').qq{"};
 
-undef &MY::postamble; # suppress warning
-*MY::postamble = sub {
+sub MY::postamble {
         my $mycompiler     = $f77->compiler();
         my $mycflags       = $f77->cflags();
-	my $orig = pdlpp_postamble_int(@pack);
+	my $orig = pdlpp_postamble(@pack);
 	my $hack_64bit = $Config{archname}=~m/amd64|i686|x86_64/ ?" -fPIC " : "";
 	$orig =~ s/:\s*slatec\.pd/: slatec.pd/;
 	$orig .= "FFLAGS = $hack_64bit $mycflags \$(OPTIMIZE)\n";
 	join "\n", $orig, map "$_\$(OBJ_EXT): $_.f
 	$mycompiler -c \$(FFLAGS) -o $_\$(OBJ_EXT) $_.f", @slatecfiles;
-};
+}
 
 # Remove i386 option for OS X recent versions for better build, dual arch does not work anyway
 if ($Config{osname} =~ /darwin/ && version->parse($Config{osvers}) >= version->parse("14")) { # OS X Mavericks+
