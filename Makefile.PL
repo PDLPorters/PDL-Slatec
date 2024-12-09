@@ -63,6 +63,36 @@ if ($Config{osname} =~ /darwin/ && version->parse($Config{osvers}) >= version->p
        $hash{LDDLFLAGS} =~ s/-arch i386/ /g;
 }
 
+my $package_name = $pack[0][2];
+(my $repo = $package_name) =~ s#::#-#g;
+$repo = "PDLPorters/$repo";
 WriteMakefile(
- %hash,
+  AUTHOR => 'PerlDL Developers <pdl-general@lists.sourceforge.net>',
+  MIN_PERL_VERSION => '5.016',
+  CONFIGURE_REQUIRES => {
+    'ExtUtils::MakeMaker' => 0,
+    'PDL' => '2.094',
+    'ExtUtils::F77' => '1.26', # eg 1.20 can leave off -lgfortran
+  },
+  TEST_REQUIRES => {
+    'Test::Exception' => 0,
+  },
+  PREREQ_PM => {
+    'PDL' => '2.094',
+  },
+  META_MERGE => {
+    "meta-spec" => { version => 2 },
+    resources => {
+      homepage => 'http://pdl.perl.org/',
+      bugtracker  => {web=>"https://github.com/$repo/issues"},
+      repository  => {
+        url => "git://github.com/$repo.git",
+        type => 'git',
+        web => "https://github.com/$repo",
+      },
+      x_IRC => 'irc://irc.perl.org/#pdl',
+    },
+  },
+  clean => { FILES => join ' ', qw(MANIFEST.bak) },
+  %hash,
 );
