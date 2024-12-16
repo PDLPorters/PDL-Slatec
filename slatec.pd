@@ -247,7 +247,6 @@ sub intcopy {
   (sub {"&".$cvarname->(@_)}, sub {"PDL_LongLong *"},
     sub {"PDL_LongLong ".$cvarname->(@_)." = ".$rvalue->(@_).";"});
 }
-
 # defslatec( $pdlname, $funcnames, $argstr, $docstring, $funcref )
 #
 # $pdlname is the name of the PDL function to be created
@@ -278,6 +277,7 @@ sub intcopy {
 # text within $docstring. This string gets printed out
 # in the perldl shell after a '?? string' command
 #
+# [Par_forcetype(undef=none,ref=OtherPar), C_argin, C_paramtype, C_decl_value]
 my %KIND2I = (
   Mat => ['', sub{"\$P($_[0][2])"}, sub {PDL::Type->new($_[0])->ctype." *"}],
   FuncRet => ['', sub {()}, sub {()}],
@@ -306,17 +306,14 @@ sub defslatec {
 		  )
 		 /x or die("Invalid slatec par $_");
 		[$1,$2,$3,$4,$5]} @args;
-
     # is this for a function (Type name eq "FuncRet")
     # or a subroutine?
     die "Only one FuncRet allowed in pars list.\n"
       if (my @funcret = grep $_->[0] eq "FuncRet", @args2) > 1;
     my $fpar = @funcret ? "\$$funcret[0][2]()" : undef;
-
     my $pars = join ';', map
       +($KIND2I{$_->[0]}[0] // die "Invalid ppars ",join(',',@$_),"\n") . join('', @$_[1..3]),
       grep !$ignore_ppar{$_->[0]}, @args2;
-
     my $otherpars = join ';', map
       ${$KIND2I{$_->[0]}[0]} . join(' => ', @$_[2,2]),
       grep ref $KIND2I{$_->[0]}[0], @args2;
@@ -326,17 +323,13 @@ sub defslatec {
       my @opt = map $_->[2], grep $_->[1] =~ /\bo\b/, @args2;
       $argorder = [@mand, @opt];
     }
-
     my @talts = map
       [$ftypes{$_} // die("FTYPE $_ NOT THERE\n"),$fnames->{$_}],
       sort keys %$fnames;
-
     my $func = "PDL_FORTRAN(\$T".join('',map {$_->[0]} @talts) . "(" .
       join(',',map qq{$_->[1]}, @talts)."))";
     if ( defined $fpar ) { $func = "$fpar = $func"; }
-
     my $funcargs = join ',', map $KIND2I{$_->[0]}[1]->($_), @args2;
-
     my @protos = map $KIND2I{$_->[0]}[2], @args2;
     my @cheaders;
     foreach my $t ( @talts ) {
@@ -350,7 +343,6 @@ sub defslatec {
           . " PDL_FORTRAN($t->[1])(" .
           join(',', @decl_args) . ");";
     }
-
     # add on the function reference, if supplied, to the start of
     # the doc string
     if ( defined $docstring ) {
@@ -358,7 +350,6 @@ sub defslatec {
     } else {
       $docstring = '';
     }
-
     # IntVals
     my @intcopy_code = map +($KIND2I{$_->[0]}[3]||sub{})->($_), @args2;
     my $code = join("\n", @intcopy_code, "$func($funcargs);");
