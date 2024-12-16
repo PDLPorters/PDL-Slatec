@@ -1,2 +1,4 @@
+- PCHIP functions removed as now in PDL 2.096, PDL::Primitive
+
 2.096 2024-12-09
 - split out from PDL 2.095
