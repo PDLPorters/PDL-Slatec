@@ -242,10 +242,6 @@ END
 
 use strict;
 
-sub firstpar {
-	$_[0] =~ /^\(([^),]+)[),]/ or die "Can't find first par from '$_[0]'";
-	$1
-}
 sub intcopy {
   my ($cvarname, $rvalue) = @_; # closures
   (sub {"&".$cvarname->(@_)}, sub {"PDL_LongLong *"},
