@@ -278,6 +278,9 @@ my %KIND2I = (
   Mat => ['', sub{"\$P($_[0][2])"}, sub {PDL::Type->new($_[0])->ctype." *"}],
   FuncRet => ['', sub {()}, sub {()}],
   Integer => ['longlong ', sub{"\$P($_[0][2])"}, sub {"PDL_LongLong *"}],
+  # scalar for calling C functions
+  IntScalar => ['longlong ', sub{"\$$_[0][2]()"}, sub {"PDL_LongLong "}],
+  MatScalar => ['', sub{"\$$_[0][2]()"}, sub {PDL::Type->new($_[0])->ctype." "}],
   Logical => ['int ', sub{"\$P($_[0][2])"}, sub {"PDL_Long *"}],
   OtherParDim => [\'PDL_LongLong ', intcopy(sub {"dim_$_[0][2]"}, sub {"\$SIZE($_[0][2])"})],
   IntVal => [undef, intcopy(sub {$_[0][2]}, sub {$_[0][4]})],
@@ -350,8 +353,8 @@ sub defslatec {
     print <<"ENDDBG" if $debug;
 pp_def('$pname',
   Pars => '$pars',
-  OtherPars => '$otherpars',
-  ArgOrder => [qw(@$argorder)],
+  OtherPars => '$otherpars',@{[ !$argorder ? '' : "
+  ArgOrder => [qw(@$argorder)],"]}
   Code => '$code',
   CHeader => '@cheaders',
   GenericTypes => [@{[join ", ", map $_->[0], @talts]}],
