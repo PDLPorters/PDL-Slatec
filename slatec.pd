@@ -11,7 +11,7 @@ use warnings;
 
 =head1 NAME
 
-PDL::Slatec - PDL interface to the slatec numerical programming library
+PDL::Slatec - PDL interface to some LINPACK and EISPACK routines - DEPRECATED
 
 =head1 SYNOPSIS
 
@@ -21,66 +21,25 @@ PDL::Slatec - PDL interface to the slatec numerical programming library
 
 =head1 DESCRIPTION
 
+This module is now deprecated in favour of L<PDL::LinearAlgebra>.
+
 This module serves the dual purpose of providing an interface to
 parts of the slatec library and showing how to interface PDL
 to an external library.
-Using this library requires a fortran compiler; the source for the routines
+Using this library requires a Fortran compiler; the source for the routines
 is provided for convenience.
 
 Currently available are routines to:
 manipulate matrices; calculate FFT's; 
-fit data using polynomials; 
-and interpolate/integrate data using piecewise cubic Hermite interpolation.
+and fit data using polynomials.
 
 =head2 Piecewise cubic Hermite interpolation (PCHIP)
 
-PCHIP is the slatec package of routines to perform piecewise cubic
-Hermite interpolation of data.
-It features software to produce a monotone and "visually pleasing"
-interpolant to monotone data.  
-According to Fritsch & Carlson ("Monotone piecewise
-cubic interpolation", SIAM Journal on Numerical Analysis 
-17, 2 (April 1980), pp. 238-246),
-such an interpolant may be more reasonable than a cubic spline if
-the data contains both "steep" and "flat" sections.  
-Interpolation of cumulative probability distribution functions is 
-another application.
-These routines are cryptically named (blame FORTRAN), 
-beginning with 'ch', and accept either float or double ndarrays. 
+These routines are now in L<PDL::Primitive> as of PDL 2.096.
 
-Most of the routines require an integer parameter called C<skip>;
-if set to 1, then no checks on the validity of the input data are
-made, otherwise these checks are made.
-The value of C<skip> can be set to 1 if a routine
-such as L</chim> has already been successfully called.
-
-=over 4
-
-=item * 
-
-If not known, estimate derivative values for the points
-using the L</chim>, L</chic>, or L</chsp> routines
-(the following routines require both the function (C<f>)
-and derivative (C<d>) values at a set of points (C<x>)). 
-
-=item * 
-
-Evaluate, integrate, or differentiate the resulting PCH
-function using the routines:
-L</chfd>; L</chfe>; L</chia>; L</chid>.
-
-=item * 
-
-If desired, you can check the monotonicity of your
-data using L</chcm>, or use L</chbs> to convert a PCH function into
-B-representation for use with the B-spline routines of SLATEC.
-
-=back
- 
 =cut
 
 EOD
-# ' un-confuse emacs
 
 # add function definitions after finishing the first pp_addpm(), since this
 # adds a '=head1 FUNCTIONS' line at the end of the text
@@ -98,6 +57,8 @@ Eigenvalues and eigenvectors of a real positive definite symmetric matrix.
 
 Note: this function should be extended to calculate only eigenvalues if called 
 in scalar context!
+
+This is the EISPACK routine C<rs>.
 
 =head2 matinv
 
@@ -150,7 +111,7 @@ In scalar context, only $coeffs is returned.
 Historically, C<$eps> was modified in-place to be a return value of the
 rms error.  This usage is deprecated, and C<$eps> is an optional parameter now.
 It is still modified if present.
- 
+
 C<$c> is a working array accessible to Slatec - you can feed it to several
 other Slatec routines to get nice things out.  It does not broadcast
 correctly and should probably be fixed by someone.  If you are 
@@ -405,8 +366,6 @@ use PDL::Basic;
 use PDL::Primitive;
 use PDL::Ufunc;
 use strict;
-
-# Note: handles only real symmetric positive-definite.
 
 *eigsys = \&PDL::eigsys;
 
